@@ -22,7 +22,7 @@ export default class Helloworld extends cc.Component {
 
     async fetchData() {
        if(this.crowdinAxios){
-            this.crowdinAxios.getStrings().then(res => console.log(`Sucess Promise : ${JSON.stringify(res)}`)).catch(error => console.error(`Error Fetch : ${error}`))
+            this.crowdinAxios.getStringsByLocale("en-US").then(res => console.log(`Sucess Promise : ${JSON.stringify(res)}`)).catch(error => console.error(`Error Fetch : ${error}`))
        }else{
             console.error(`CrowdingAxio Object is Null`);
        }
