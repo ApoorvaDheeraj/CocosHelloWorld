@@ -19,19 +19,13 @@ export default class Helloworld extends cc.Component {
     start () {
         // init logic
         this.label.string = this.text
-        const requestOptions: RequestInit = {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
-        this.fetchData(this.URL, requestOptions);
+        this.fetchData(this.URL);
 
     }
 
     async fetchData(url: string, options?: RequestInit) {
        if(this.crowdinAxios){
-            this.crowdinAxios.get(url, {}).then(res => console.log(`Sucess Promise : ${JSON.stringify(res)}`)).catch(error => console.error(`Error Fetch : ${error}`))
+            this.crowdinAxios.get(url).then(res => console.log(`Sucess Promise : ${JSON.stringify(res)}`)).catch(error => console.error(`Error Fetch : ${error}`))
        }else{
             console.error(`CrowdingAxio Object is Null`);
        }
