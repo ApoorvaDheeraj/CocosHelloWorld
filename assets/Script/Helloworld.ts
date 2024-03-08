@@ -1,6 +1,6 @@
 
+import OtaClient from "./OtaClient";
 import { HttpClient } from "./model";
-import { AxiosHttpClient } from "./axiosClient";
 const {ccclass, property} = cc._decorator;
 
 @ccclass
@@ -11,21 +11,18 @@ export default class Helloworld extends cc.Component {
 
     @property
     text: string = 'hello';
-
-    private URL:string = "https://distributions.crowdin.net/fb8fb0cf928df2131f4bfa9n010/manifest.json";
-    private testURL = 'http://quotes.toscrape.com/random'
-    private crowdinAxios:HttpClient = new AxiosHttpClient();
+    private crowdinAxios:OtaClient = new OtaClient("fb8fb0cf928df2131f4bfa9n010");
 
     start () {
         // init logic
         this.label.string = this.text
-        this.fetchData(this.URL);
+        this.fetchData();
 
     }
 
-    async fetchData(url: string, options?: RequestInit) {
+    async fetchData() {
        if(this.crowdinAxios){
-            this.crowdinAxios.get(url).then(res => console.log(`Sucess Promise : ${JSON.stringify(res)}`)).catch(error => console.error(`Error Fetch : ${error}`))
+            this.crowdinAxios.getStrings().then(res => console.log(`Sucess Promise : ${JSON.stringify(res)}`)).catch(error => console.error(`Error Fetch : ${error}`))
        }else{
             console.error(`CrowdingAxio Object is Null`);
        }
