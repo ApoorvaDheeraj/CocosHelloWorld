@@ -38,7 +38,7 @@ class CloudLocCacheHelper {
      * @param cacheDirName The name of the cache directory.
      * @returns A string indicating the result of the initialization.
      */
-    initCache(cacheDirName: string): string {
+    initCache(cacheDirName: string, isRemoveCache?:boolean): string {
         // Check if the environment is native
         if (cc.sys.isNative) {
             // Construct the cache directory path
@@ -58,15 +58,17 @@ class CloudLocCacheHelper {
      * Removes the cached directory.
      * @returns A boolean indicating whether the removal was successful.
      */
-    removeCachedDirector(): boolean {
+    removeCachedDirectory(): boolean {
         // Check if the environment is native
         if (cc.sys.isNative) {
             // Check if the cache directory exists
             if (jsb.fileUtils.isDirectoryExist(this.cacheDir)) {
                 console.log(
-                    `${CloudLocalizationController.CL_LOG_KEY} writeDataToCacheFile: removeCachedDirector: File Found = ${this.cacheDir}`
+                    `${CloudLocalizationController.CL_LOG_KEY} removeCachedDirectory: File Found = ${this.cacheDir}`
                 );
                 return jsb.fileUtils.removeDirectory(this.cacheDir);
+            }else{
+                console.log(`${CloudLocalizationController.CL_LOG_KEY} removeCachedDirectory: File NOT Found = ${this.cacheDir}`)
             }
             return false;
         }
@@ -74,18 +76,21 @@ class CloudLocCacheHelper {
 
     /**
      * Deletes a file from the cache directory.
-     * @param url The URL of the file to delete.
+     * @param fileName The URL of the file to delete.
      * @returns A boolean indicating whether the deletion was successful.
      */
-    deleteFileFromCache(url: string): boolean {
+    deleteFileFromCache(fileName: string): boolean {
         // Check if the environment is native
+        const filePath = this.cacheDir + `/${fileName}`;
         if (cc.sys.isNative) {
             // Check if the file exists in the cache directory
-            if (jsb.fileUtils.isFileExist(this.cacheDir)) {
+            if (jsb.fileUtils.isFileExist(filePath)) {
                 console.log(
-                    `${CloudLocalizationController.CL_LOG_KEY} writeDataToCacheFile: deleteFileFromCache: File Found = ${this.cacheDir}`
+                    `${CloudLocalizationController.CL_LOG_KEY} deleteFileFromCache: File Found = ${filePath}`
                 );
-                return jsb.fileUtils.removeFile(this.cacheDir);
+                return jsb.fileUtils.removeFile(filePath);
+            }else {
+                console.log(`${CloudLocalizationController.CL_LOG_KEY} deleteFileFromCache: File NOT Found = ${filePath}`)
             }
             return false;
         }
@@ -93,15 +98,15 @@ class CloudLocCacheHelper {
 
     /**
      * Writes data to a cache file.
-     * @param filename The name of the cache file.
+     * @param fileName The name of the cache file.
      * @param fileContent The content to write to the cache file.
      * @returns A boolean indicating whether the writing was successful.
      */
-    writeDataToCacheFile(filename: string, fileContent: string): boolean {
-        const cachedFileName = this.cacheDir + filename;
+    writeDataToCacheFile(fileName: string, fileContent: string): boolean {
+        const cachedFileName = this.cacheDir + `/${fileName}`;
 
         // For testing in browser Using cv.tool
-        CloudLocalizationCacheHandler.SaveStringByCCFile(cachedFileName, fileContent);
+        // CloudLocalizationCacheHandler.SaveStringByCCFile(cachedFileName, fileContent);
 
         if (cc.sys.isNative) {
             console.log(
@@ -117,16 +122,16 @@ class CloudLocCacheHelper {
      * @returns The content of the cache file as a string.
      */
     getDataFromCacheFile(fileName: string): string {
-        const cachedFilename = this.cacheDir + fileName;
+        const cachedFilename = this.cacheDir + `/${fileName}`;
 
         // For testing in browser Using cv.tool
-        return CloudLocalizationCacheHandler.GetStringByCCFile(cachedFilename);
+        // return CloudLocalizationCacheHandler.GetStringByCCFile(cachedFilename);
 
         // Check if the environment is native
         if (cc.sys.isNative) {
             if (jsb.fileUtils.isFileExist(cachedFilename)) {
                 console.log(
-                    `${CloudLocalizationController.CL_LOG_KEY} writeDataToCacheFile: getDataFromCacheFile: File Found = ${cachedFilename}`
+                    `${CloudLocalizationController.CL_LOG_KEY} getDataFromCacheFile: File Found = ${cachedFilename}`
                 );
                 return jsb.fileUtils.getStringFromFile(cachedFilename);
             } else {
@@ -158,6 +163,7 @@ export class CloudLocalizationCacheHandler {
 
     constructor(cacheDir: string) {
         // Initialize cache directory and load cache timestamps
+       
         let initDire = this.cacheHelper.initCache(cacheDir);
         this.cacheTimeStampsOfLocFiles = JSON.parse(CloudLocalizationCacheHandler.GetStringByCCFile(CloudLocsCacheKeys.LocsTime) ?? '{}');
 		console.log(`${CloudLocalizationController.CL_LOG_KEY} CCHandler : construtor: initDir = ${initDire}`);
@@ -270,11 +276,17 @@ export class CloudLocalizationCacheHandler {
 		for(const langCode in this.cacheTimeStampsOfLocFiles){
 			if (this.cacheTimeStampsOfLocFiles.hasOwnProperty(langCode)) {
                 const fileName = `${langCode}.json`;
+                if(cc.sys.isNative){
+                    this.cacheHelper.deleteFileFromCache(fileName);
+                }else{
                 this.RemoveStringByCCFile(fileName);		
+                }
+               	
             }
 		}
         this.RemoveStringByCCFile(CloudLocsCacheKeys.CachedDirName);
         this.RemoveStringByCCFile(CloudLocsCacheKeys.CacheLocsManifest);
+        this.clearLastModifiedTimeCache();
     }
 
     /**

@@ -38,9 +38,9 @@ export class LocalizationController {
                         this.stringsTable[languageCode] = crowdinStrings[languageCode];
                     }
                 }
-                console.log(`${CloudLocalizationController.CL_LOG_KEY} stringTable is Populated with Crowdin Data ${JSON.stringify(crowdinStrings)}`);
+                // console.log(`${CloudLocalizationController.CL_LOG_KEY} stringTable is Populated with Crowdin Data ${JSON.stringify(crowdinStrings)}`);
             }else{
-                console.log(`${CloudLocalizationController.CL_LOG_KEY} crowdinStrings is undefined || NULL || Empty ${JSON.stringify(crowdinStrings)}`);
+                // console.log(`${CloudLocalizationController.CL_LOG_KEY} crowdinStrings is undefined || NULL || Empty ${JSON.stringify(crowdinStrings)}`);
             }
         }).catch(error => console.error(`${CloudLocalizationController.CL_LOG_KEY} fetchCloudLocalizationData Error: ${error}`));
     }
@@ -69,7 +69,7 @@ export class LocalizationController {
     loadLocStringsFromResources(lang: string, successCallback?: Function, failureCallback?: Function) {
 
         const crowdinLocLangCode = this.cloudLocalizationController.getLanguageAccToCrowdinLangCode(lang);
-        console.log(`${CloudLocalizationController.CL_LOG_KEY} WPTG Lang code ${lang} crowdinCode ${crowdinLocLangCode}`);
+        // console.log(`${CloudLocalizationController.CL_LOG_KEY} WPTG Lang code ${lang} crowdinCode ${crowdinLocLangCode}`);
 
         const filePath = Languages[lang].i18nPath;
 
@@ -91,7 +91,7 @@ export class LocalizationController {
                 this.stringsTable[crowdinLocLangCode] = {};
             }
 
-            console.log(`${CloudLocalizationController.CL_LOG_KEY} loadLocStringsFromResources cc.resource.load: For File = ${crowdinLocLangCode}`);
+            // console.log(`${CloudLocalizationController.CL_LOG_KEY} loadLocStringsFromResources cc.resource.load: For File = ${crowdinLocLangCode}`);
 
             let locData: Object = asset.json["string"];
             for (let locKey of Object.keys(locData)) {

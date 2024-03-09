@@ -24,8 +24,7 @@ export default class CloudLocalizationController {
         // Initialize CloudLocalizationCacheHandler with the cache directory
         this.cloudLocCacheHandler = new CloudLocalizationCacheHandler(this.cacheDirectory);
         // Initialize CrowdinOtaClient
-        // TODO Dis
-        this.crowdinOtaClient = new CrowdinOtaClient("");
+        this.crowdinOtaClient = new CrowdinOtaClient("fb8fb0cf928df2131f4bfa9n010");
     }
 
     /**
@@ -58,6 +57,7 @@ export default class CloudLocalizationController {
             console.log(
                 `${CloudLocalizationController.CL_LOG_KEY} Manifest Not Updated: Fetching Crowdin Data and returning`
             );
+            this.cloudLocCacheHandler.clearUnusedLocFiles();
             this.getManifestContent();
             return this.getLocalizationContent();
         } else {
