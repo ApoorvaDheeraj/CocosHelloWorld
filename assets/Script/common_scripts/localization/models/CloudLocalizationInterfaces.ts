@@ -18,8 +18,8 @@ export const enum CrowdinLangCode {
 
 export const enum CloudLocsCacheKeys {
     LocsTime = 'locsCacheTime',
-    CachedDirName = "cloudlocs",
-    CacheLocsManifest = "cacheLocsManifest"
+    CachedDirName = "cloudLocalization",
+    CacheManifestValuesKey = "cacheLocsManifest"
 }
 
 export type Language = {

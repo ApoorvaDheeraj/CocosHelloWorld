@@ -57,19 +57,21 @@ export default class CloudLocalizationController {
             console.log(
                 `${CloudLocalizationController.CL_LOG_KEY} Manifest Not Updated: Fetching Crowdin Data and returning`
             );
-            this.cloudLocCacheHandler.clearUnusedLocFiles();
+            console.log(`CrowdinTimeStamp = ${this.cloudLocsLastModifiedTime} & LocalTimeStamp ${this.cloudLocCacheHandler.getLastModifiedTimeOfCacheDir()}`);
+            // this.cloudLocCacheHandler.clearUnusedLocFiles();
             this.getManifestContent();
             return this.getLocalizationContent();
         } else {
             // If manifest is already updated, return cached data
             console.log(`${CloudLocalizationController.CL_LOG_KEY} Manifest Already Updated: Returning Cached Data`);
+            console.log(`CrowdinTimeStamp = ${this.cloudLocsLastModifiedTime} & LocalTimeStamp ${this.cloudLocCacheHandler.getLastModifiedTimeOfCacheDir()}`);
 
             // Get cached localization content from CloudLocalizationCacheHandler
             const cachedLocsTable = this.cloudLocCacheHandler.getSavedLocalizationStringTable();
 
             // If cached data is available and not empty, return it
             if (cachedLocsTable && Object.keys(cachedLocsTable).length > 0) {
-                console.log(`${CloudLocalizationController.CL_LOG_KEY} getSavedLocalizationStringTable:Cached Data is returned`)
+                console.log(`${CloudLocalizationController.CL_LOG_KEY} : Cached Data is returned`)
                 return cachedLocsTable;
             }
 
@@ -84,6 +86,7 @@ export default class CloudLocalizationController {
     private async fetchManifestAndTimeStamp() {
         // Fetch the manifest and update last modified timestamp of cloud localization files
         this.cloudLocsManifestObj = await this.crowdinOtaClient.manifest;
+        console.log(`fetchManifestAndTimeStamp CrowdinManifestObj = ${JSON.stringify(this.cloudLocsManifestObj)}`);
         this.cloudLocsLastModifiedTime = this.cloudLocsManifestObj?.timestamp || 0;
     }
 
