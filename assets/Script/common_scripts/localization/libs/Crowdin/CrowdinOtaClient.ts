@@ -1,6 +1,6 @@
-import { CrowdinAxiosHttpClient } from './CrowdinAxiosHttpClient';
+import { CrowdinAssetFetcher } from './CrowdinAssetFetcher';
 import { CrowdinClientConfig, CrowdinHttpClient, CrowdinLangStrings, CrowdinLangTranslations, CrowdinLangManifest, CrowdinTranslations } from './CrowdinModels';
-import { CrowdinStringUtils } from './CrowdinStringUtils';
+import { StringUtils } from '../../../utils/StringUtils';
  
 /**
  * @category OtaClient
@@ -8,17 +8,14 @@ import { CrowdinStringUtils } from './CrowdinStringUtils';
 export default class CrowdinOtaClient {
     /** @internal */
 
-    private static readonly BASE_URL: string = "https://distributions.crowdin.net";
+    private static readonly BASE_URL: string = 'https://distributions.crowdin.net';
     private readonly httpClient: CrowdinHttpClient;
-    
-    private distributionURL: string;
 
+    private distributionURL: string;
     private crowdinManifestHolder?: Promise<CrowdinLangManifest>;
     private disableManifestCache = false;
-
     private stringsCache: { [file: string]: Promise<any> } = {};
     private disableStringsCache = false;
-
     private disableJsonDeepMerge = false;
     private locale?: string;
 
@@ -27,8 +24,9 @@ export default class CrowdinOtaClient {
      * @param config client config
      */
     constructor(private distributionHash: string, config?: CrowdinClientConfig) {
-        this.httpClient = config?.httpClient || new CrowdinAxiosHttpClient();
+        this.httpClient = config?.httpClient || new CrowdinAssetFetcher();
         this.distributionURL = this.getCrowdinDistributionURL();
+        this.distributionHash  = distributionHash;
         this.disableManifestCache = !!config?.disableManifestCache;
         this.locale = config?.languageCode;
         this.disableStringsCache = !!config?.disableStringsCache;
@@ -37,13 +35,13 @@ export default class CrowdinOtaClient {
 
     /**
      * Get Crowdin Distribution URL
-     * 
-     * If crowdinDistributionBaseURL is not available in the dependencies (deps), 
-     * it falls back to using the default BASE_URL defined in the class. 
-     * 
+     *
+     * If crowdinDistributionBaseURL is not available in the dependencies (deps),
+     * it falls back to using the default BASE_URL defined in the class.
+     *
      * @returns crowdinDistributionBaseURL
      */
-    getCrowdinDistributionURL(): string{
+    getCrowdinDistributionURL(): string {
         return CrowdinOtaClient.BASE_URL;
     }
 
@@ -127,7 +125,7 @@ export default class CrowdinOtaClient {
         await Promise.all(
             languages.map(async (language) => {
                 translations[language] = await this.getLanguageTranslations(language);
-            }),
+            })
         );
         return translations;
     }
@@ -147,7 +145,7 @@ export default class CrowdinOtaClient {
             files.map(async (file) => {
                 const content = await this.getFileTranslations(file);
                 return { content, file };
-            }),
+            })
         );
     }
 
@@ -180,7 +178,7 @@ export default class CrowdinOtaClient {
         await Promise.all(
             Object.entries(content).map(async ([lang, files]) => {
                 res[lang] = await this.getStringsByFilesAndLocale(files);
-            }),
+            })
         );
         return res;
     }
@@ -244,7 +242,7 @@ export default class CrowdinOtaClient {
             if (this.disableJsonDeepMerge) {
                 strings = { ...strings, ...content };
             } else {
-                CrowdinStringUtils.mergeDeep(strings, content);
+                StringUtils.mergeDeep(strings, content);
             }
         }
         return strings;
@@ -254,7 +252,9 @@ export default class CrowdinOtaClient {
         if (this.crowdinManifestHolder && !this.disableManifestCache) {
             return this.crowdinManifestHolder;
         } else {
-            this.crowdinManifestHolder = this.httpClient.get(`${this.distributionURL}/${this.distributionHash}/manifest.json`);
+            this.crowdinManifestHolder = this.httpClient.get(
+                `${this.distributionURL}/${this.distributionHash}/manifest.json`
+            );
             return this.crowdinManifestHolder;
         }
     }
@@ -265,7 +265,7 @@ export default class CrowdinOtaClient {
             return languageCode;
         } else {
             throw new Error(
-                'Language code should be either provided through input arguments or by "setCurrentLocale" method',
+                'Language code should be either provided through input arguments or by "setCurrentLocale" method'
             );
         }
     }
@@ -273,7 +273,7 @@ export default class CrowdinOtaClient {
     private async getJsonFiles(): Promise<CrowdinLangManifest['content']> {
         const content = await this.getContent();
         const res: CrowdinLangManifest['content'] = {};
-        Object.entries(content).forEach(([lang, files]) => (res[lang] = files.filter(CrowdinStringUtils.isJsonFile)));
+        Object.entries(content).forEach(([lang, files]) => (res[lang] = files.filter(StringUtils.isJsonFile)));
         return res;
     }
 }

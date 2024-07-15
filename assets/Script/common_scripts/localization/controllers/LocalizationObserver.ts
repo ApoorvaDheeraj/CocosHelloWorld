@@ -1,3 +1,5 @@
+import { LocalizationEvents } from "../models/LocalizationEvents";
+
 export class LocalizationObserver {
 	private eventTarget: cc.EventTarget;
 
@@ -5,15 +7,15 @@ export class LocalizationObserver {
 		this.eventTarget = new cc.EventTarget();
 	}
 
-	subscribe(eventName: string, callback: Function, target: any) {
+	subscribe(eventName: LocalizationEvents, callback: Function, target: any) {
 		this.eventTarget.on(eventName, callback, target);
 	}
 
-	subscribeOnce(eventName: string, callback: Function, target: any) {
-		this.eventTarget.on(eventName, callback, target);
+	subscribeOnce(eventName: LocalizationEvents, callback: Function, target: any) {
+		this.eventTarget.once(eventName, callback as any, target);
 	}
 
-	unsubscribe(eventName: string, callback: Function, target: any) {
+	unsubscribe(eventName: LocalizationEvents, callback: Function, target: any) {
 		this.eventTarget.off(eventName, callback, target);
 	}
 
@@ -21,7 +23,7 @@ export class LocalizationObserver {
 		this.eventTarget.targetOff(target);
 	}
 
-	notify(eventName: string, data?: any) {
+	notify(eventName: LocalizationEvents, data?: any) {
 		this.eventTarget.emit(eventName, data);
 	}
 }

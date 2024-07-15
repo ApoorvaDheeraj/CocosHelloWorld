@@ -93,4 +93,47 @@ export class StringUtils {
 	static capitalizeTheFirstLetterOfEachWord(text: string): string  {
 		return text.toLowerCase().split(" ").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 	}
+
+	/**
+	* Checks if the given value is an object.
+	* @param {any} value - The value to check.
+	* @returns {boolean} - True if the value is an object and not an array, false otherwise.
+	*/
+	static isObject(value: any): boolean {
+        return value && typeof value === 'object' && !Array.isArray(value);
+    }
+
+	/**
+	 * Checks if the given file name has a .json extension.
+	 * @param {string} file - The file name to check.
+	 * @returns {boolean} - True if the file has a .json extension, false otherwise.
+	 */
+    static isJsonFile(file: string): boolean {
+        const extension = (file ?? '').split('.').pop();
+        return extension?.toLocaleLowerCase() === 'json';
+    }
+
+	/**
+	 * Deeply merges two objects. Properties from the source object
+	 * are merged into the target object. 
+	 * @param {any} targetObj - The target object to merge properties into.
+	 * @param {any} sourceObj - The source object to merge properties from.
+	 * @returns {any} - The merged target object.
+	 */
+    static mergeDeep(targetObj: any, sourceObj: any): any {
+        const target = targetObj ?? {};
+        const source = sourceObj ?? {};
+        Object.keys(source).forEach((key) => {
+            if (StringUtils.isObject(source[key])) {
+                if (!(key in target)) {
+                    target[key] = source[key];
+                } else {
+                    target[key] = StringUtils.mergeDeep(target[key], source[key]);
+                }
+            } else {
+                target[key] = source[key];
+            }
+        });
+        return target;
+    }
 }

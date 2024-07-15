@@ -1,149 +1,133 @@
+import CrowdinOtaClient from '../libs/Crowdin/CrowdinOtaClient';
+import { CloudLocalizationCacheHandler } from './CloudLocalizationCacheHandler';
+import { CrowdinLangStrings } from '../libs/Crowdin/CrowdinModels';
+import { CloudLocData } from "../models/CloudLocalizationInterfaces";
+
 /**
  * CloudLocalizationController to retrieve data from Crowdin and manage localization cache.
  */
-import CrowdinOtaClient from '../libs/Crowdin/CrowdinOtaClient';
-import { CloudLocalizationCacheHandler } from './CloudLocalizationCacheHandler';
-import { CrowdinLangManifest, CrowdinLangStrings } from '../libs/Crowdin/CrowdinModels';
-import { CloudLocsCacheKeys, CrowdinLangCode, LANGUAGE_TYPE } from '../models/CloudLocalizationInterfaces';
-import { LocStringsTable } from '../models/LocStringsData';
-
-export default class CloudLocalizationController {
+export class CloudLocalizationController {
     private crowdinOtaClient: CrowdinOtaClient;
     private cloudLocCacheHandler: CloudLocalizationCacheHandler;
-    private cloudLocsManifestObj: CrowdinLangManifest = null;
-    private fetchedLocStrings: CrowdinLangStrings = {};
-    private cloudLocsLastModifiedTime: number = 0;
-    private cacheDirectory: string;
 
-    // For Log Purpose
-    public static CL_LOG_KEY: string = 'CCL';
-
-    constructor(cacheDirectory?: string) {
-        // Set the cache directory or use the default value
-        this.cacheDirectory = cacheDirectory || CloudLocsCacheKeys.CachedDirName;
+    constructor() {
         // Initialize CloudLocalizationCacheHandler with the cache directory
-        this.cloudLocCacheHandler = new CloudLocalizationCacheHandler(this.cacheDirectory);
+        this.cloudLocCacheHandler = new CloudLocalizationCacheHandler();
+
         // Initialize CrowdinOtaClient
-        this.crowdinOtaClient = new CrowdinOtaClient("fb8fb0cf928df2131f4bfa9n010");
+        this.crowdinOtaClient = new CrowdinOtaClient("32d445f380c11cae042efa9n010");
+    }
+
+    isCacheAvailable(): boolean {
+        return this.cloudLocCacheHandler.isCacheAvailable();
     }
 
     /**
      * Fetches cloud localization data from Crowdin.
-     * Checks if the data needs to be updated based on timestamps.
+     * @returns A promise that resolves with the fetched localization data, or null if the Crowdin OTA Client is unavailable.
      */
-    public async fetchCloudLocalizationData(): Promise<CrowdinLangStrings | null> {
-        if (this.crowdinOtaClient) {
-            return await this.fetchAndIterateCloudLocalizationData();
+    async getLocalizationData(): Promise<CloudLocData | null> {
+        const manifestUpdated = await this.isManifestUpdated();
+
+        if (manifestUpdated) {
+            console.log("Dheeraj: From Crowdin");
+            const locData = await this.getLocalizationContent();
+            return {
+                data: locData,
+                isLiveData: true
+            }
         } else {
-            console.error('Unable to get Crowdin OTA Client');
-            return null;
-        }
-    }
+            console.log("Dheeraj: From Cache");
+            const cachedData = this.getCachedLocalizationData();
 
-    /**
-     * Fetches cloud localization data from Crowdin and returns it.
-     * Checks if the data needs to be updated based on timestamps.
-     * If the timestamp is not updated, returns the cached data.
-     * If the cache is empty, fetches new data from Crowdin.
-     * @returns A promise resolving to the cloud localization data.
-     */
-    private async fetchAndIterateCloudLocalizationData(): Promise<CrowdinLangStrings> {
-        // Fetch the timestamp of cloud localization files
-        await this.fetchManifestAndTimeStamp();
-
-        // Check if cloud localization files need to be updated
-        if (this.cloudLocsLastModifiedTime > this.cloudLocCacheHandler.getLastModifiedTimeOfCacheDir()) {
-            // If manifest is not updated, fetch new Crowdin data and return
-            console.log(
-                `${CloudLocalizationController.CL_LOG_KEY} Manifest Not Updated: Fetching Crowdin Data and returning`
-            );
-            console.log(`CrowdinTimeStamp = ${this.cloudLocsLastModifiedTime} & LocalTimeStamp ${this.cloudLocCacheHandler.getLastModifiedTimeOfCacheDir()}`);
-            // this.cloudLocCacheHandler.clearUnusedLocFiles();
-            this.getManifestContent();
-            return this.getLocalizationContent();
-        } else {
-            // If manifest is already updated, return cached data
-            console.log(`${CloudLocalizationController.CL_LOG_KEY} Manifest Already Updated: Returning Cached Data`);
-            console.log(`CrowdinTimeStamp = ${this.cloudLocsLastModifiedTime} & LocalTimeStamp ${this.cloudLocCacheHandler.getLastModifiedTimeOfCacheDir()}`);
-
-            // Get cached localization content from CloudLocalizationCacheHandler
-            const cachedLocsTable = this.cloudLocCacheHandler.getSavedLocalizationStringTable();
-
-            // If cached data is available and not empty, return it
-            if (cachedLocsTable && Object.keys(cachedLocsTable).length > 0) {
-                console.log(`${CloudLocalizationController.CL_LOG_KEY} : Cached Data is returned`)
-                return cachedLocsTable;
+            if (cachedData != null) {
+                return {
+                    data: cachedData,
+                    isLiveData: false
+                };
             }
 
-            // If cached data is empty, fetch new data from Cloud and return it
-            return this.getLocalizationContent();
-        }
-    }
-
-    /**
-     * Fetches the manifest from Crowdin and updates the last modified timestamp of cloud localization files.
-     */
-    private async fetchManifestAndTimeStamp() {
-        // Fetch the manifest and update last modified timestamp of cloud localization files
-        this.cloudLocsManifestObj = await this.crowdinOtaClient.manifest;
-        console.log(`fetchManifestAndTimeStamp CrowdinManifestObj = ${JSON.stringify(this.cloudLocsManifestObj)}`);
-        this.cloudLocsLastModifiedTime = this.cloudLocsManifestObj?.timestamp || 0;
-    }
-
-    /**
-     * Fetches the manifest content and updates the cache with the last modified timestamp.
-     */
-    private async getManifestContent() {
-        if (this.cloudLocsManifestObj) {
-            this.cloudLocsManifestObj = await this.crowdinOtaClient.manifest;
-        }
-        const manifestContent = this.cloudLocsManifestObj.content;
-        if (manifestContent) {
-            for (const contentFile in manifestContent) {
-                this.cloudLocCacheHandler.updateLastModifiedTime(contentFile, this.cloudLocsLastModifiedTime);
+            const locData = await this.getLocalizationContent();
+            return {
+                data: locData,
+                isLiveData: true
             }
         }
-        this.cloudLocCacheHandler.setLocalLocalizationManifestObj(this.cloudLocsManifestObj);
+    }
+
+    getCachedLocalizationData(langCode?: string): CrowdinLangStrings | null {
+        const cachedLocsTable = this.cloudLocCacheHandler.getSavedLocalizationStringTable(langCode);
+
+        if (cachedLocsTable != null) {
+            return cachedLocsTable;
+        }
+
+        return null;
+    }
+
+    isLanguageCached(langCode: string): boolean {
+        const localManifest = this.cloudLocCacheHandler.localLocsManifestObject;
+
+        if (!localManifest) {
+            return false;
+        }
+
+        for (let mapping of Object.values(localManifest.language_mapping)) {
+            if (mapping.name == langCode) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async isManifestUpdated(): Promise<boolean> {
+        const cloudLocsManifestObj = await this.crowdinOtaClient.manifest;
+        const currManifestTimestamp = cloudLocsManifestObj?.timestamp ?? 0;
+        const localManifestTimestamp = this.cloudLocCacheHandler.localLocsManifestObject?.timestamp ?? 0;
+        if (currManifestTimestamp > localManifestTimestamp) {
+            this.cloudLocCacheHandler.localLocsManifestObject = cloudLocsManifestObj;
+            return true;
+        }
+        return false;
     }
 
     /**
      * Fetches localization content from Crowdin and saves it in the cache.
      * @returns A promise resolving to the fetched localization strings.
      */
-    private async getLocalizationContent(): Promise<CrowdinLangStrings> {
-        // Fetch localization content from Crowdin and save it in the cache
+    private async getLocalizationContent(): Promise<CrowdinLangStrings | null> {
         try {
-            console.log(`${CloudLocalizationController.CL_LOG_KEY} getLocalizationContent:fetch Localization Content from Crowdin`)
-            this.fetchedLocStrings = await this.crowdinOtaClient.getStrings();
-            this.cloudLocCacheHandler.assignCrowdinStringsToLocStrings(this.fetchedLocStrings);
-            return this.fetchedLocStrings;
+            let locStrings = await this.crowdinOtaClient.getStrings();
+            const mappingSuccess  = this.updateLangCodeForLocContent(locStrings);
+            if (!mappingSuccess) {
+                return null;
+            }
+            this.cloudLocCacheHandler.saveLocalizationStrings(locStrings);
+            return locStrings;
         } catch (error) {
-            console.error(error);
+           console.error("load_crowdin_loc_failed", { error: error });
         }
     }
 
-    getLanguageAccToCrowdinLangCode(languageType: string): CrowdinLangCode {
-        switch (languageType) {
-            case LANGUAGE_TYPE.zh_CN:
-                return CrowdinLangCode.Chinese;
-            case LANGUAGE_TYPE.en_US:
-                return CrowdinLangCode.English;
-            case LANGUAGE_TYPE.vi_VN:
-                return CrowdinLangCode.Vietnamese;
-            case LANGUAGE_TYPE.th_PH:
-                return CrowdinLangCode.Thai;
-            case LANGUAGE_TYPE.pt_BR:
-                return CrowdinLangCode.Portuguese_BR;
-            case LANGUAGE_TYPE.fr_CA:
-                return CrowdinLangCode.Canada_FR;
-            case LANGUAGE_TYPE.es_MX:
-                return CrowdinLangCode.Spanish_MX;
-            case LANGUAGE_TYPE.ja_JP:
-                return CrowdinLangCode.Japanese;
-            case LANGUAGE_TYPE.ko_KR:
-                return CrowdinLangCode.Korean;
-            default:
-                return CrowdinLangCode.English;
+    private updateLangCodeForLocContent(locStrings: CrowdinLangStrings): boolean {
+        const allLangCodes = [...Object.keys(locStrings)];
+        let missingMappingCode: Array<string> = [];
+        for (let langCode of allLangCodes) {
+            const langMap = this.cloudLocCacheHandler.localLocsManifestObject.language_mapping;
+            if (!langMap.hasOwnProperty(langCode)) {
+                missingMappingCode.push(langCode);
+                continue;
+            }
+            const mappingCode = langMap[langCode].name;
+            delete Object.assign(locStrings, {[mappingCode]: locStrings[langCode]})[langCode];
         }
+
+        if (missingMappingCode.length > 0) {
+            console.error("crowdin_mapping_failed", {langCodes: JSON.stringify(missingMappingCode)});
+            return false;
+        }
+
+        return true;
     }
 }

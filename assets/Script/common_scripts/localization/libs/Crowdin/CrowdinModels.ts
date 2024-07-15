@@ -52,6 +52,12 @@ export interface CrowdinLangManifest {
     mapping: string[];
 }
 
+export interface CloudLocalizationManifest{
+    timestamp: number;
+    languages: string[];
+    language_mapping: CrowdinLangMappings | never[];
+}
+
 export interface CrowdinLangMappings {
     [languageCode: string]: CrowdinLangMapping;
 }
