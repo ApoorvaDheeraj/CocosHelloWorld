@@ -60,6 +60,7 @@ export class CloudLocCacheHelper {
     writeDataToCacheFile(fileName: string, fileContent: Object) {
         try {
             const fileContentStr = JSON.stringify(fileContent);
+            console.log("Dheeraj:" + fileContentStr);
             if (cc.sys.isNative) {
                 const cachedFileName = this.cacheDir + "/" + fileName;
                 jsb.fileUtils.writeStringToFile(fileContentStr, cachedFileName);
