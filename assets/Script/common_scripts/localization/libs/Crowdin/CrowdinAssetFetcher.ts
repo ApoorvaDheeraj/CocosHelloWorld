@@ -12,7 +12,7 @@ export class CrowdinAssetFetcher implements CrowdinHttpClient {
         return new Promise<T>((resolve, reject) => {
             cc.assetManager.loadRemote(url, {ext:'.json'}, (err : Error, data:any) => {
                 if (err) {
-                    console.error('Error loading data:', err);
+                    console.error("CL: Error loading data:" + JSON.stringify(err));
                     reject(err);
                     return;
                 }
@@ -26,25 +26,26 @@ export class CrowdinAssetFetcher implements CrowdinHttpClient {
             const xhr = new XMLHttpRequest();
 
             xhr.onreadystatechange = ()=> {
-
+                console.debug("CL: Status Code = " + xhr.status + " Response readyState" + xhr.readyState)
                 if (xhr.readyState != 4) {
                     return;
                 }
-
+                console.debug("CL: Status Code = " + xhr.status + " Response readyState" + xhr.readyState );
+                console.debug("Response Json " + JSON.stringify(xhr.response));
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    console.log("Dheeraj: onreadystatechange" + xhr.response);
+                    console.debug("Dheeraj: onreadystatechange" + xhr.response);
                     resolve(xhr.response);
                     return;
                 } else {
-                    console.error("Dheeraj: onreadystatechange Error loading data: "+ xhr.statusText);
+                    console.error("CL: Dheeraj: onreadystatechange Error loading data: "+ xhr.statusText);
                     reject(new Error(xhr.statusText));
                     return;
                 }
             }
     
             xhr.onerror = () => {
-                console.error('Network error');
-                reject(new Error('Network error'));
+                console.error('CL: Network error');
+                reject(new Error('CL: Network error'));
             };
 
             xhr.responseType = 'json';
