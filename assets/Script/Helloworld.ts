@@ -1,3 +1,4 @@
+import { ConfigLoader } from "./ConfigLoader";
 
 const {ccclass, property} = cc._decorator;
 
@@ -9,10 +10,16 @@ export default class Helloworld extends cc.Component {
 
     @property
     text: string = 'hello';
+    
 
     start () {
         // init logic
         this.label.string = this.text;
+        
+    }
+     onLoad(){
+        console.log("HelloWord : => OnLoad");
+        ConfigLoader.loadStringsFromJson();
         
     }
 }
